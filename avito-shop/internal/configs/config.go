@@ -1,6 +1,11 @@
 package configs
 
-import "os"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	DBHost     string
@@ -13,12 +18,17 @@ type Config struct {
 }
 
 func Load() *Config {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	return &Config{
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"),
-		DBUser:     getEnv("DB_USER", "avito"),
-		DBPassword: getEnv("DB_PASSWORD", "avito123"),
-		DBName:     getEnv("DB_NAME", "merch"),
+		DBUser:     getEnv("DB_USER", "postgres"),
+		DBPassword: getEnv("DB_PASSWORD", "password"),
+		DBName:     getEnv("DB_NAME", "shop"),
 		JWTSecret:  getEnv("JWT_SECRET", "my_secret_key"),
 		Port:       getEnv("PORT", "8080"),
 	}
