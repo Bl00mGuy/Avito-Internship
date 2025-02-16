@@ -111,17 +111,17 @@ func (s *userService) TransferCoins(fromUserID int64, toUsername string, amount 
 		return errors.New("получатель не найден")
 	}
 
-	tx, err := s.db.Begin()
+	transaction, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer transaction.Rollback()
 
-	err = s.userRepo.UpdateCoinsTx(tx, fromUserID, -amount)
+	err = s.userRepo.UpdateCoinsTx(transaction, fromUserID, -amount)
 	if err != nil {
 		return err
 	}
-	err = s.userRepo.UpdateCoinsTx(tx, toUser.ID, amount)
+	err = s.userRepo.UpdateCoinsTx(transaction, toUser.ID, amount)
 	if err != nil {
 		return err
 	}
@@ -131,12 +131,12 @@ func (s *userService) TransferCoins(fromUserID int64, toUsername string, amount 
 		ToUserID:   toUser.ID,
 		Amount:     amount,
 	}
-	err = s.transferRepo.CreateTx(tx, transfer)
+	err = s.transferRepo.CreateTx(transaction, transfer)
 	if err != nil {
 		return err
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err = transaction.Commit(); err != nil {
 		return err
 	}
 
@@ -149,11 +149,11 @@ func (s *userService) BuyItem(userID int64, item string) error {
 		return errors.New("товар не найден")
 	}
 
-	tx, err := s.db.Begin()
+	transaction, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer transaction.Rollback()
 
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
@@ -163,7 +163,7 @@ func (s *userService) BuyItem(userID int64, item string) error {
 		return errors.New("недостаточно монет для покупки")
 	}
 
-	err = s.userRepo.UpdateCoinsTx(tx, userID, -price)
+	err = s.userRepo.UpdateCoinsTx(transaction, userID, -price)
 	if err != nil {
 		return err
 	}
@@ -173,10 +173,10 @@ func (s *userService) BuyItem(userID int64, item string) error {
 		Item:   item,
 		Price:  price,
 	}
-	err = s.purchaseRepo.CreateTx(tx, purchase)
+	err = s.purchaseRepo.CreateTx(transaction, purchase)
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return transaction.Commit()
 }

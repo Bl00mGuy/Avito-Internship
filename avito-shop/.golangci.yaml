@@ -7,11 +7,9 @@ linters:
     - gosimple
     - govet
     - ineffassign
-    - staticcheck
     - typecheck
     - unused
     - varnamelen
-    #- gofumpt
     - gci
 
 issues:

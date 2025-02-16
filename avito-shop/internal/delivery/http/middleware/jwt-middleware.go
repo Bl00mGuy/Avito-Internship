@@ -12,15 +12,15 @@ import (
 
 func JWTMiddleware(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			authHeader := request.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Нет токена", http.StatusUnauthorized)
+				http.Error(writer, "Нет токена", http.StatusUnauthorized)
 				return
 			}
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, "Неверный формат токена", http.StatusUnauthorized)
+				http.Error(writer, "Неверный формат токена", http.StatusUnauthorized)
 				return
 			}
 			tokenStr := parts[1]
@@ -29,16 +29,16 @@ func JWTMiddleware(secret string) func(http.Handler) http.Handler {
 				return []byte(secret), nil
 			})
 			if err != nil || !token.Valid || claims.ExpiresAt.Time.Before(time.Now()) {
-				http.Error(w, "Неверный или просроченный токен", http.StatusUnauthorized)
+				http.Error(writer, "Неверный или просроченный токен", http.StatusUnauthorized)
 				return
 			}
 			id, err := strconv.ParseInt(claims.Subject, 10, 64)
 			if err != nil {
-				http.Error(w, "Некорректный идентификатор в токене", http.StatusUnauthorized)
+				http.Error(writer, "Некорректный идентификатор в токене", http.StatusUnauthorized)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "userID", id)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			ctx := context.WithValue(request.Context(), "userID", id)
+			next.ServeHTTP(writer, request.WithContext(ctx))
 		})
 	}
 }
