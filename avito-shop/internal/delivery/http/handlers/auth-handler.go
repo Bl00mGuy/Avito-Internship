@@ -24,16 +24,23 @@ func AuthHandler(svc service.UserService, jwtSecret string) http.HandlerFunc {
 			http.Error(writer, "Неверный запрос", http.StatusBadRequest)
 			return
 		}
+
 		user, err := svc.Auth(req.Username, req.Password)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
+
 		token, err := auth.GenerateJWT(user, jwtSecret)
 		if err != nil {
 			http.Error(writer, "Ошибка генерации токена", http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(writer).Encode(AuthResponse{Token: token})
+
+		writer.Header().Set("Content-Type", "application/json")
+		response := AuthResponse{Token: token}
+		if err := json.NewEncoder(writer).Encode(response); err != nil {
+			http.Error(writer, "Ошибка кодирования ответа", http.StatusInternalServerError)
+		}
 	}
 }

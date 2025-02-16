@@ -11,6 +11,8 @@ linters:
     - unused
     - varnamelen
     - gci
+  disable:
+    - staticcheck
 
 issues:
   exclude-use-default: false

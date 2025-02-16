@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/Bl00mGuy/Avito-Internship/avito-shop/internal/domain"
@@ -32,7 +33,12 @@ func (r *purchaseRepo) GetByUserID(userID int64) ([]domain.Purchase, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("Ошибка закрытия rows в GetByUserID: %v\n", err)
+		}
+	}()
+
 	var purchases []domain.Purchase
 	for rows.Next() {
 		var p domain.Purchase

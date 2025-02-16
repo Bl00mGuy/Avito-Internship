@@ -76,6 +76,19 @@ Cервис для покупки мерча и перевода монет ме
     golangci-lint run ./...
     ```
 
+### .env_example:
+```text
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=password
+DB_NAME=shop
+JWT_SECRET=my_secret_key
+PORT=8080
+```
+
+при запуске тестов **/avito-shop/tests/** установите ```DB_HOST=localhost```
+
 ---
 
 # **Тестовое задание для стажёра Backend-направления (зимняя волна 2025)**

@@ -33,7 +33,10 @@ func TestAuthShouldCreateUserAndReturnToken(t *testing.T) {
 		"username": "testuser1",
 		"password": "password",
 	}
-	body, _ := json.Marshal(payload)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("Ошибка маршалинга JSON: %v", err)
+	}
 	req := httptest.NewRequest("POST", "/api/auth", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	recorder := httptest.NewRecorder()
@@ -114,7 +117,10 @@ func TestSendCoinTransfersCoinsBetweenUsers(t *testing.T) {
 		"toUser": "receiver",
 		"amount": 100,
 	}
-	body, _ := json.Marshal(transferPayload)
+	body, err := json.Marshal(transferPayload)
+	if err != nil {
+		t.Fatalf("Ошибка маршалинга JSON: %v", err)
+	}
 	req := httptest.NewRequest("POST", "/api/sendCoin", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+tokenSender)
@@ -135,7 +141,10 @@ func TestSendCoinTransfersCoinsBetweenUsers(t *testing.T) {
 }
 
 func getAuthToken(router http.Handler, payload map[string]string, t *testing.T) string {
-	body, _ := json.Marshal(payload)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("Ошибка маршалинга JSON: %v", err)
+	}
 	req := httptest.NewRequest("POST", "/api/auth", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	recorder := httptest.NewRecorder()

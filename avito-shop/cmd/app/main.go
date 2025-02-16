@@ -17,7 +17,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка подключения к БД: %v", err)
 	}
-	defer database.Close()
+	defer func() {
+		if err := database.Close(); err != nil {
+			log.Printf("Ошибка закрытия соединения с БД: %v", err)
+		}
+	}()
 
 	userRepo := repository.NewUserRepository(database)
 	purchaseRepo := repository.NewPurchaseRepository(database)

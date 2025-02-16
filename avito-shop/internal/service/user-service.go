@@ -115,7 +115,13 @@ func (s *userService) TransferCoins(fromUserID int64, toUsername string, amount 
 	if err != nil {
 		return err
 	}
-	defer transaction.Rollback()
+	defer func() {
+		if err != nil {
+			if rollbackErr := transaction.Rollback(); rollbackErr != nil {
+				fmt.Printf("Ошибка при откате транзакции: %v\n", rollbackErr)
+			}
+		}
+	}()
 
 	err = s.userRepo.UpdateCoinsTx(transaction, fromUserID, -amount)
 	if err != nil {
@@ -153,7 +159,13 @@ func (s *userService) BuyItem(userID int64, item string) error {
 	if err != nil {
 		return err
 	}
-	defer transaction.Rollback()
+	defer func() {
+		if err != nil {
+			if rollbackErr := transaction.Rollback(); rollbackErr != nil {
+				fmt.Printf("Ошибка при откате транзакции: %v\n", rollbackErr)
+			}
+		}
+	}()
 
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {

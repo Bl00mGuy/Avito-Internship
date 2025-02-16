@@ -18,11 +18,16 @@ func BuyHandler(svc service.UserService) http.HandlerFunc {
 			http.Error(writer, "Не указан товар", http.StatusBadRequest)
 			return
 		}
+
 		err := svc.BuyItem(userID, item)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		json.NewEncoder(writer).Encode(map[string]string{"message": "Покупка прошла успешно"})
+
+		response := map[string]string{"message": "Покупка прошла успешно"}
+		if err := json.NewEncoder(writer).Encode(response); err != nil {
+			http.Error(writer, "Ошибка кодирования ответа", http.StatusInternalServerError)
+		}
 	}
 }

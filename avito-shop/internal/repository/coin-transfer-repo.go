@@ -37,7 +37,11 @@ func (r *coinTransferRepo) GetReceived(userID int64) ([]domain.CoinTransfer, err
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("Ошибка закрытия rows в GetReceived: %v\n", err)
+		}
+	}()
 
 	var transfers []domain.CoinTransfer
 	for rows.Next() {
@@ -55,7 +59,11 @@ func (r *coinTransferRepo) GetSent(userID int64) ([]domain.CoinTransfer, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("Ошибка закрытия rows в GetSent: %v\n", err)
+		}
+	}()
 
 	var transfers []domain.CoinTransfer
 	for rows.Next() {
