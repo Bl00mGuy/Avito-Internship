@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +32,12 @@ func JWTMiddleware(secret string) func(http.Handler) http.Handler {
 				http.Error(w, "Неверный или просроченный токен", http.StatusUnauthorized)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "userID", claims.Subject)
+			id, err := strconv.ParseInt(claims.Subject, 10, 64)
+			if err != nil {
+				http.Error(w, "Некорректный идентификатор в токене", http.StatusUnauthorized)
+				return
+			}
+			ctx := context.WithValue(r.Context(), "userID", id)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

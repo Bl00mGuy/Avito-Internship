@@ -37,11 +37,12 @@ type userService struct {
 	db           *sql.DB
 }
 
-func NewUserService(userRepo repository.UserRepository, purchaseRepo repository.PurchaseRepository, transferRepo repository.CoinTransferRepository) UserService {
+func NewUserService(userRepo repository.UserRepository, purchaseRepo repository.PurchaseRepository, transferRepo repository.CoinTransferRepository, db *sql.DB) UserService {
 	return &userService{
 		userRepo:     userRepo,
 		purchaseRepo: purchaseRepo,
 		transferRepo: transferRepo,
+		db:           db,
 	}
 }
 
@@ -69,26 +70,29 @@ func (s *userService) GetInfo(userID int64) (domain.CoinHistory, []domain.Purcha
 	history := domain.CoinHistory{}
 	received, err := s.transferRepo.GetReceived(userID)
 	if err != nil {
-		return history, nil, err
+		return history, nil, fmt.Errorf("ошибка при получении переводов: %w", err)
 	}
 	sent, err := s.transferRepo.GetSent(userID)
 	if err != nil {
-		return history, nil, err
+		return history, nil, fmt.Errorf("ошибка при получении отправленных переводов: %w", err)
 	}
 	for _, r := range received {
 		history.Received = append(history.Received, struct {
 			FromUser string
 			Amount   int
-		}{FromUser: "User#" + itoa(r.FromUserID), Amount: r.Amount})
+		}{FromUser: fmt.Sprintf("User#%d", r.FromUserID), Amount: r.Amount})
 	}
 	for _, t := range sent {
 		history.Sent = append(history.Sent, struct {
 			ToUser string
 			Amount int
-		}{ToUser: "User#" + itoa(t.ToUserID), Amount: t.Amount})
+		}{ToUser: fmt.Sprintf("User#%d", t.ToUserID), Amount: t.Amount})
 	}
 	purchases, err := s.purchaseRepo.GetByUserID(userID)
-	return history, purchases, err
+	if err != nil {
+		return history, nil, fmt.Errorf("ошибка при получении покупок: %w", err)
+	}
+	return history, purchases, nil
 }
 
 func (s *userService) TransferCoins(fromUserID int64, toUsername string, amount int) error {
@@ -106,20 +110,37 @@ func (s *userService) TransferCoins(fromUserID int64, toUsername string, amount 
 	if err != nil {
 		return errors.New("получатель не найден")
 	}
-	err = s.userRepo.UpdateCoins(fromUserID, -amount)
+
+	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
-	err = s.userRepo.UpdateCoins(toUser.ID, amount)
+	defer tx.Rollback()
+
+	err = s.userRepo.UpdateCoinsTx(tx, fromUserID, -amount)
 	if err != nil {
 		return err
 	}
+	err = s.userRepo.UpdateCoinsTx(tx, toUser.ID, amount)
+	if err != nil {
+		return err
+	}
+
 	transfer := &domain.CoinTransfer{
 		FromUserID: fromUserID,
 		ToUserID:   toUser.ID,
 		Amount:     amount,
 	}
-	return s.transferRepo.Create(transfer)
+	err = s.transferRepo.CreateTx(tx, transfer)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *userService) BuyItem(userID int64, item string) error {
@@ -127,6 +148,13 @@ func (s *userService) BuyItem(userID int64, item string) error {
 	if !ok {
 		return errors.New("товар не найден")
 	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
 		return err
@@ -134,18 +162,21 @@ func (s *userService) BuyItem(userID int64, item string) error {
 	if user.Coins < price {
 		return errors.New("недостаточно монет для покупки")
 	}
-	err = s.userRepo.UpdateCoins(userID, -price)
+
+	err = s.userRepo.UpdateCoinsTx(tx, userID, -price)
 	if err != nil {
 		return err
 	}
+
 	purchase := &domain.Purchase{
 		UserID: userID,
 		Item:   item,
 		Price:  price,
 	}
-	return s.purchaseRepo.Create(purchase)
-}
+	err = s.purchaseRepo.CreateTx(tx, purchase)
+	if err != nil {
+		return err
+	}
 
-func itoa(num int64) string {
-	return fmt.Sprintf("%d", num)
+	return tx.Commit()
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type PurchaseRepository interface {
-	Create(purchase *domain.Purchase) error
+	CreateTx(tx *sql.Tx, purchase *domain.Purchase) error
 	GetByUserID(userID int64) ([]domain.Purchase, error)
 }
 
@@ -20,9 +20,11 @@ func NewPurchaseRepository(db *sql.DB) PurchaseRepository {
 	return &purchaseRepo{db: db}
 }
 
-func (r *purchaseRepo) Create(purchase *domain.Purchase) error {
-	return r.db.QueryRow("INSERT INTO purchases(user_id, item, price, created_at) VALUES($1,$2,$3,$4) RETURNING id",
-		purchase.UserID, purchase.Item, purchase.Price, time.Now()).Scan(&purchase.ID)
+func (r *purchaseRepo) CreateTx(tx *sql.Tx, purchase *domain.Purchase) error {
+	return tx.QueryRow(
+		"INSERT INTO purchases(user_id, item, price, created_at) VALUES($1, $2, $3, $4) RETURNING id",
+		purchase.UserID, purchase.Item, purchase.Price, time.Now(),
+	).Scan(&purchase.ID)
 }
 
 func (r *purchaseRepo) GetByUserID(userID int64) ([]domain.Purchase, error) {
@@ -39,5 +41,6 @@ func (r *purchaseRepo) GetByUserID(userID int64) ([]domain.Purchase, error) {
 		}
 		purchases = append(purchases, p)
 	}
+
 	return purchases, nil
 }

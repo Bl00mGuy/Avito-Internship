@@ -18,22 +18,22 @@ type AuthResponse struct {
 }
 
 func AuthHandler(svc service.UserService, jwtSecret string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(writer http.ResponseWriter, request *http.Request) {
 		var req AuthRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Неверный запрос", http.StatusBadRequest)
+		if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+			http.Error(writer, "Неверный запрос", http.StatusBadRequest)
 			return
 		}
 		user, err := svc.Auth(req.Username, req.Password)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
 		token, err := auth.GenerateJWT(user, jwtSecret)
 		if err != nil {
-			http.Error(w, "Ошибка генерации токена", http.StatusInternalServerError)
+			http.Error(writer, "Ошибка генерации токена", http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(AuthResponse{Token: token})
+		json.NewEncoder(writer).Encode(AuthResponse{Token: token})
 	}
 }

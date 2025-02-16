@@ -5,7 +5,7 @@ import "time"
 type User struct {
 	ID       int64
 	Username string
-	Password string // В реальном проекте – хэш пароля
+	Password string
 	Coins    int
 }
 

@@ -14,16 +14,16 @@ type InfoResponse struct {
 }
 
 func InfoHandler(svc service.UserService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(responseWriter http.ResponseWriter, r *http.Request) {
 		userID := r.Context().Value("userID").(int64)
 		user, err := svc.GetUser(userID)
 		if err != nil {
-			http.Error(w, "Пользователь не найден", http.StatusInternalServerError)
+			http.Error(responseWriter, "Пользователь не найден", http.StatusInternalServerError)
 			return
 		}
 		history, purchases, err := svc.GetInfo(userID)
 		if err != nil {
-			http.Error(w, "Ошибка получения информации", http.StatusInternalServerError)
+			http.Error(responseWriter, "Ошибка получения информации", http.StatusInternalServerError)
 			return
 		}
 		resp := InfoResponse{
@@ -31,7 +31,9 @@ func InfoHandler(svc service.UserService) http.HandlerFunc {
 			Inventory:   purchases,
 			CoinHistory: history,
 		}
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(responseWriter).Encode(resp); err != nil {
+			http.Error(responseWriter, "Ошибка при отправке ответа", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -41,22 +43,24 @@ type SendCoinRequest struct {
 }
 
 func SendCoinHandler(svc service.UserService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(responseWriter http.ResponseWriter, r *http.Request) {
 		userID := r.Context().Value("userID").(int64)
 		var req SendCoinRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Неверный запрос", http.StatusBadRequest)
+			http.Error(responseWriter, "Неверный запрос", http.StatusBadRequest)
 			return
 		}
 		if req.Amount <= 0 {
-			http.Error(w, "Количество должно быть положительным", http.StatusBadRequest)
+			http.Error(responseWriter, "Количество должно быть положительным", http.StatusBadRequest)
 			return
 		}
 		err := svc.TransferCoins(userID, req.ToUser, req.Amount)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
-		json.NewEncoder(w).Encode(map[string]string{"message": "Монеты переведены"})
+		if err := json.NewEncoder(responseWriter).Encode(map[string]string{"message": "Монеты переведены"}); err != nil {
+			http.Error(responseWriter, "Ошибка при отправке ответа", http.StatusInternalServerError)
+		}
 	}
 }

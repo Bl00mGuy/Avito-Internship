@@ -3,6 +3,81 @@ Test tasks for selection for the internship
 
 ---
 
+# Avito Shop Merch Service
+
+Cервис для покупки мерча и перевода монет между сотрудниками согласно тестовому заданию Avito.
+
+## Структура проекта
+
+Проект организован согласно принципам ***чистой архитектуры***:
+
+- **internal/domain** – доменные сущности и бизнес-правила
+- **internal/repository** – реализация доступа к данным (PostgreSQL)
+- **internal/service** – бизнес-логика приложения
+- **internal/delivery/http** – HTTP-адаптеры:
+  - **handlers** – HTTP-обработчики
+  - **router** - Роутинг
+  - **middleware** – HTTP middleware (JWT middleware)
+- **internal/auth** – функции, связанные с аутентификацией (генерация JWT)
+
+## Запуск
+
+Для запуска сервиса необходимо:
+
+1. Установить [Docker](https://www.docker.com/) и [Docker Compose](https://docs.docker.com/compose/).
+2. Склонировать репозиторий:
+
+   ```bash
+   git clone https://github.com/Bl00mGuy/Avito-Internship.git
+   cd avito-shop
+   ```
+3. Запустить сервис с помощью Docker Compose:
+    ```
+     docker-compose up --build
+    ```
+Сервис будет доступен по адресу: http://localhost:8080
+
+## API эндпоинты
+
+Примеры запросов с использованием curl:
+
+- Авторизация:
+  ```bash
+  curl -X POST http://localhost:8080/api/auth \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "password": "your_password"}'
+  ```
+- Покупка мерча:
+  ```bash
+  curl -X GET http://localhost:8080/api/buy/t-shirt \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  ```
+- Перевод монет:
+  ```bash
+  curl -X POST http://localhost:8080/api/sendCoin \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+    -d '{"toUser": "bob", "amount": 100}'
+  ```
+
+## Дополнительные фичи
+
+- Нагрузочное тестирование (k6)
+
+    Проведено нагрузочное тестирование с помощью k6. Пример теста:
+    ```bash
+    k6 run load_test.js
+    ```
+
+- Линтинг кода (golangci-lint)
+
+  Используется golangci-lint для проверки качества кода:
+    ```bash
+    golangci-lint run ./...
+    ```
+
+---
+
 # **Тестовое задание для стажёра Backend-направления (зимняя волна 2025)**
 
 ## Магазин мерча

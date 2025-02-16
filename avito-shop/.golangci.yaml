@@ -1,45 +1,35 @@
 run:
   timeout: 5m
-  tests: true
-  concurrency: 4
 
 linters:
-  enable-all: true
-  disable:
-    - lll
-    - gocyclo
-
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  gocritic:
-    settings:
-      captLocal:
-        paramsOnly: false
-  funlen:
-    lines: 100
-    statements: 50
-    ignore-comments: true
-  depguard:
-    rules:
-      legacy:
-        deny:
-          - pkg: "github.com/golang/protobuf"
-            desc: "Используйте google.golang.org/protobuf вместо этого."
-          - pkg: "github.com/satori/go.uuid"
-            desc: "Используйте github.com/google/uuid; пакет satori не поддерживается."
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - varnamelen
+    #- gofumpt
+    - gci
 
 issues:
   exclude-use-default: false
+  max-same-issues: 5
   max-issues-per-linter: 0
-  max-same-issues: 0
+  max-issues: 50
 
-output:
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
-  sort-order:
-    - severity
-    - file
+linters-settings:
+  errcheck:
+    check-blank: true
+  gci:
+    sections: ["standard", "default", "prefix(github.com/Bl00mGuy)"]
+  gofumpt:
+    extra-rules: true
+  varnamelen:
+    min-length: 3
+  wsl:
+    allow-assign-and-call: false
+    allow-cuddle-declarations: false
+    allow-trailing-comment: false

@@ -12,7 +12,7 @@ import (
 func InitDB(cfg *configs.Config) (*sql.DB, error) {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
-	db, err := sql.Open("postgres", connStr)
+	database, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +37,6 @@ CREATE TABLE IF NOT EXISTS coin_transfers (
 	amount INTEGER,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );`
-	_, err = db.Exec(schema)
-	return db, err
+	_, err = database.Exec(schema)
+	return database, err
 }
