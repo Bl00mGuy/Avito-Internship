@@ -1,8 +1,3 @@
-# Avito-Internship
-Test tasks for selection for the internship 
-
----
-
 # Avito Shop Merch Service
 
 Cервис для покупки мерча и перевода монет между сотрудниками согласно тестовому заданию Avito.
